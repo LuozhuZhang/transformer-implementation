@@ -32,6 +32,9 @@ def tokenize_data(data, max_len=MAX_LEN):
 # Create dataloaders for train and test data
 def create_dataloader(dataset, batch_size=BATCH_SIZE):
     inputs, masks, labels = tokenize_data(dataset)
+    print(inputs)
+    print(masks)
+    print(labels)
     data = torch.utils.data.TensorDataset(inputs, masks, labels)
     return DataLoader(data, batch_size=batch_size, shuffle=True)
 
