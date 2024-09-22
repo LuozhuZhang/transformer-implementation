@@ -93,3 +93,12 @@ class TransformerEncoder(nn.Module):
             src = layer(src, mask)
         src = src.mean(dim=0)  # Global average pooling
         return self.fc(src)
+    
+# Step 4: Define loss function, optimizer and device
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# 6 layers + 512 d + 8 heads + 2048 FFN (hidden size) + 30522 vocab size
+model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)  #! Here we are defining the transformer encoder
+model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
