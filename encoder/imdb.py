@@ -52,3 +52,44 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.pe[:, :x.size(1), :]
+
+# Transformer Encoder Layer with Multi-head Attention and Feed-Forward Network
+class TransformerEncoderLayer(nn.Module):
+    def __init__(self, d_model, num_heads, d_ff):
+        super().__init__()
+        self.self_attn = nn.MultiheadAttention(d_model, num_heads)  #! here is MHA implementation
+        self.ffn = nn.Sequential(
+            nn.Linear(d_model, d_ff),
+            nn.ReLU(),
+            nn.Linear(d_ff, d_model)
+        )
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+
+    def forward(self, src, src_mask=None):
+        # Self-attention layer
+        attn_output, _ = self.self_attn(src, src, src, attn_mask=src_mask)
+        src = self.norm1(src + attn_output)
+        # Feed-forward network
+        ffn_output = self.ffn(src)
+        return self.norm2(src + ffn_output)
+
+# Transformer Encoder consisting of multiple encoder layers
+class TransformerEncoder(nn.Module):
+    def __init__(self, num_layers, d_model, num_heads, d_ff, vocab_size):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, d_model)  #! inputs embedding
+        self.positional_encoding = PositionalEncoding(d_model)  #! positional encoding
+        self.layers = nn.ModuleList([TransformerEncoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)])  #! MHA process
+        self.fc = nn.Linear(d_model, NUM_CLASSES)
+
+    def forward(self, src, mask=None):
+        # Embedding + positional encoding
+        src = self.embedding(src)
+        src = self.positional_encoding(src)
+        src = src.transpose(0, 1)  # Change to [seq_len, batch_size, d_model]
+        # Pass through the encoder layers
+        for layer in self.layers:
+            src = layer(src, mask)
+        src = src.mean(dim=0)  # Global average pooling
+        return self.fc(src)
