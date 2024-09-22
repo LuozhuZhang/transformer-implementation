@@ -49,10 +49,13 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        self.pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe.unsqueeze(0))  # Register pe as a buffer, so it moves with the model
 
     def forward(self, x):
-        return x + self.pe[:, :x.size(1), :]
+        # Move positional encoding to the same device as input `x`
+        pe = self.pe.to(x.device)
+        return x + pe[:, :x.size(1), :]
+
 
 # Transformer Encoder Layer with Multi-head Attention and Feed-Forward Network
 class TransformerEncoderLayer(nn.Module):
