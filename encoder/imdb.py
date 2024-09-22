@@ -143,3 +143,5 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_pa
         for record in training_records:
             f.write(record + '\n')
     print(f'Training records saved to {log_path}')
+
+train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./imdb_record.txt')
