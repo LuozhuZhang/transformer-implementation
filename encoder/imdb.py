@@ -4,6 +4,7 @@ import torch.optim as optim
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer
+import numpy as np
 
 # Hyperparameters
 MAX_LEN = 128  # Max sentence length
