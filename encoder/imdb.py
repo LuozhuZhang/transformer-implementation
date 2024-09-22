@@ -95,7 +95,12 @@ class TransformerEncoder(nn.Module):
         return self.fc(src)
     
 # Step 4: Define loss function, optimizer and device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if torch.backends.mps.is_available():  # Check if MPS is available, set for Mac
+  device = torch.device('mps')
+elif torch.cuda.is_available():
+  device = torch.device('cuda')
+else:
+  device = torch.device('cpu')
 # 6 layers + 512 d + 8 heads + 2048 FFN (hidden size) + 30522 vocab size
 model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)  #! Here we are defining the transformer encoder
 model.to(device)
