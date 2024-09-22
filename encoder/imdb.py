@@ -101,8 +101,7 @@ elif torch.cuda.is_available():
   device = torch.device('cuda')
 else:
   device = torch.device('cpu')
-# 6 layers + 512 d + 8 heads + 2048 FFN (hidden size) + 30522 vocab size
-model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)  #! Here we are defining the transformer encoder
+model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)  # 6 layers + 512 d + 8 heads + 2048 FFN (hidden size) + 30522 vocab size
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
