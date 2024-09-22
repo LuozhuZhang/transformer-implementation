@@ -1,3 +1,4 @@
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -109,10 +110,12 @@ model.to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-# Step 5: Training function with saving model state
-def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth'):
+# Step 5: Training function with time tracking and saving log
+def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./imdb_record.txt'):
     model.train()
+    training_records = []  # To store log information
     for epoch in range(num_epochs):
+        start_time = time.time()
         total_loss = 0
         for batch in train_loader:
             input_ids, attention_mask, labels = [x.to(device) for x in batch]
@@ -122,8 +125,21 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_pa
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {total_loss / len(train_loader)}')
+        
+        avg_loss = total_loss / len(train_loader)
+        epoch_time = time.time() - start_time
+        
+        # Print and record training info
+        epoch_info = f'Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}, Time: {epoch_time:.2f} seconds'
+        print(epoch_info)
+        training_records.append(epoch_info)
 
     # Save the trained model's state dict after training
     torch.save(model.state_dict(), save_path)
     print(f'Model saved to {save_path}')
+
+    # Save training records to a file
+    with open(log_path, 'w') as f:
+        for record in training_records:
+            f.write(record + '\n')
+    print(f'Training records saved to {log_path}')
