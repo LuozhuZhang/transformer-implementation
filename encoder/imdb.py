@@ -106,3 +106,18 @@ model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
+
+# Step 5: Training function
+def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
+    model.train()
+    for epoch in range(num_epochs):
+        total_loss = 0
+        for batch in train_loader:
+            input_ids, attention_mask, labels = [x.to(device) for x in batch]
+            optimizer.zero_grad()
+            outputs = model(input_ids)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {total_loss / len(train_loader)}')
