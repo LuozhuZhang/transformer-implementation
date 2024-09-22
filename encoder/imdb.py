@@ -102,14 +102,15 @@ elif torch.cuda.is_available():
 else:
   device = torch.device('cpu')
 model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)  # 6 layers + 512 d + 8 heads + 2048 FFN (hidden size) + 30522 vocab size
-model.load_state_dict(torch.load('./trained_transformer_encoder.pth'))
+# model.load_state_dict(torch.load('./trained_transformer_encoder.pth'))  #! Re-use
 model.to(device)
+# print("Model loaded successfully!")  #! Re-use
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-# Step 5: Training function
-def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
+# Step 5: Training function with saving model state
+def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth'):
     model.train()
     for epoch in range(num_epochs):
         total_loss = 0
@@ -122,3 +123,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
             optimizer.step()
             total_loss += loss.item()
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {total_loss / len(train_loader)}')
+
+    # Save the trained model's state dict after training
+    torch.save(model.state_dict(), save_path)
+    print(f'Model saved to {save_path}')
