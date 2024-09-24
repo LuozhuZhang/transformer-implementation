@@ -91,11 +91,11 @@ for result in results:
   print(result)
 
 # Save results to a log file
-with open('./local_data.log', 'w') as log_file:
+with open('./local_data.txt', 'w') as log_file:
   log_file.write(f"Tokenization Time: {tokenization_time:.2f} seconds\n")
   log_file.write(f"Evaluation Time: {evaluation_time:.2f} seconds\n")
   log_file.write(f"Total Evaluation Time: {total_time:.2f} seconds\n")
   for result in results:
     log_file.write(result + '\n')
 
-print(f'Results saved to ./local_data.log')
+print(f'Results saved to ./local_data.txt')
