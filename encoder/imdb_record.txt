@@ -1,3 +1,6 @@
+# MPS Version
 Epoch 1/3, Loss: 0.6075, Time: 199.27 seconds
 Epoch 2/3, Loss: 0.4725, Time: 192.13 seconds
 Epoch 3/3, Loss: 0.4106, Time: 192.60 seconds
+
+# GPU/CPU Version
