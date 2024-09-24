@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from imdb import TransformerEncoder
 
 # Hyperparameters
-MAX_LEN = 128  # Max sentence length
-BATCH_SIZE = 1  # Since we are evaluating only a few reviews
+MAX_LEN = 128
+BATCH_SIZE = 1
 
 # Load the BERT tokenizer for tokenization
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -39,18 +39,27 @@ custom_loader = create_dataloader(custom_reviews)
 # Load the model
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu')
 model = TransformerEncoder(num_layers=6, d_model=512, num_heads=8, d_ff=2048, vocab_size=tokenizer.vocab_size)
-model.load_state_dict(torch.load('./trained_transformer_encoder.pth', weights_only=True))  # Load your local model
+model.load_state_dict(torch.load('./trained_transformer_encoder.pth', weights_only=True))
 model.to(device)
 model.eval()
 
-# Evaluate the model on custom reviews and time the evaluation
-start_time = time.time()
+# Initialize timing
+total_time_start = time.time()
+
+# Time tokenization
+tokenization_time_start = time.time()
+custom_loader = create_dataloader(custom_reviews)  # Re-create dataloader for timing
+tokenization_time_end = time.time()
+tokenization_time = tokenization_time_end - tokenization_time_start
+
+# Time the evaluation
+evaluation_time_start = time.time()
 results = []
 
 with torch.no_grad():
   for batch in custom_loader:
     input_ids, attention_mask = [x.to(device) for x in batch]
-    
+
     # Get model output
     outputs = model(input_ids)
     probabilities = torch.nn.functional.softmax(outputs, dim=1)
@@ -59,11 +68,15 @@ with torch.no_grad():
     # Store the result
     sentiment = 'Positive' if predicted.item() == 1 else 'Negative'
     results.append(f'Review: "{custom_reviews[0]}" - Sentiment: {sentiment} - Probabilities: {probabilities.cpu().numpy()}')
-    custom_reviews.pop(0)  # Remove the processed review from the list
+    custom_reviews.pop(0)
 
-# Calculate time taken
-end_time = time.time()
-time_taken = end_time - start_time
+# Calculate time taken for evaluation
+evaluation_time_end = time.time()
+evaluation_time = evaluation_time_end - evaluation_time_start
+
+# Calculate total time
+total_time_end = time.time()
+total_time = total_time_end - total_time_start
 
 # Print the results
 for result in results:
@@ -71,7 +84,9 @@ for result in results:
 
 # Save results to a log file
 with open('./local_data.log', 'w') as log_file:
-  log_file.write(f"Evaluation Time: {time_taken:.2f} seconds\n")
+  log_file.write(f"Tokenization Time: {tokenization_time:.2f} seconds\n")
+  log_file.write(f"Evaluation Time: {evaluation_time:.2f} seconds\n")
+  log_file.write(f"Total Evaluation Time: {total_time:.2f} seconds\n")
   for result in results:
     log_file.write(result + '\n')
 
