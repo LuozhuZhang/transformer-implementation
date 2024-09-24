@@ -1,2 +1,1 @@
-# imdb-text-classification
-Learning Transformer Encoder Module
+# transformer-implementation
