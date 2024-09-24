@@ -1,3 +1,4 @@
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -109,6 +110,7 @@ optimizer = optim.Adam(model.parameters(), lr=1e-4)
 def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
     model.train()
     for epoch in range(num_epochs):
+        start_time = time.time()
         total_loss = 0
         for batch in train_loader:
             input_ids, attention_mask, labels = [x.to(device) for x in batch]
@@ -118,7 +120,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {total_loss / len(train_loader)}')
+        
+        avg_loss = total_loss / len(train_loader)
+        epoch_time = time.time() - start_time
+        
+        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}, Time: {epoch_time:.2f} seconds')
 
 # Step 6: Evaluation function
 def evaluate_model(model, test_loader):
