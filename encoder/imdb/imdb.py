@@ -114,7 +114,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 # Step 5: Training function with time tracking and saving log
-def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./imdb_record.txt'):
+def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt'):
     model.train()
     training_records = []  # To store log information
     for epoch in range(num_epochs):
@@ -163,5 +163,5 @@ def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder
     accuracy = correct / total
     print(f'Accuracy: {accuracy * 100:.2f}%')
 
-# train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./imdb_record.txt')
+# train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
 # evaluate_model(model, test_loader)
