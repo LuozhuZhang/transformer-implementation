@@ -164,3 +164,4 @@ cython_debug/
 .DS_Store
 myenv/
 trained_transformer_encoder.pth
+pytorch_model.bin
