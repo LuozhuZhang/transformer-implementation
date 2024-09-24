@@ -149,7 +149,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_pa
 
 # Step 6: Evaluation function
 def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder.pth'):
-    model.load_state_dict(torch.load(model_path))  # Load the saved model state
+    model.load_state_dict(torch.load(model_path, weights_only=True))  # Load the saved model state
     model.eval()
     correct = 0
     total = 0
