@@ -147,4 +147,21 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_pa
             f.write(record + '\n')
     print(f'Training records saved to {log_path}')
 
-train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./imdb_record.txt')
+# Step 6: Evaluation function
+def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder.pth'):
+    model.load_state_dict(torch.load(model_path))  # Load the saved model state
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch in test_loader:
+            input_ids, attention_mask, labels = [x.to(device) for x in batch]
+            outputs = model(input_ids)
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    accuracy = correct / total
+    print(f'Accuracy: {accuracy * 100:.2f}%')
+
+# train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./imdb_record.txt')
+evaluate_model(model, test_loader)
