@@ -38,7 +38,7 @@ custom_loader = create_dataloader(custom_reviews)
 # Load the model
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu')
 model = TransformerEncoder(num_layers=6, d_model=512, num_heads=8, d_ff=2048, vocab_size=tokenizer.vocab_size)
-model.load_state_dict(torch.load('./trained_transformer_encoder.pth'))  # Load your local model
+model.load_state_dict(torch.load('./trained_transformer_encoder.pth', weights_only=True))  # Load your local model
 model.to(device)
 model.eval()
 
