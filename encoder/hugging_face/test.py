@@ -1,5 +1,5 @@
 import torch
-from encoder.imdb import TransformerEncoder
+from encoder.imdb.imdb import TransformerEncoder
 from transformers import BertTokenizer
 
 MAX_LEN = 128  # Max sentence length
