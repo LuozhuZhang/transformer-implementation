@@ -4,3 +4,7 @@ Epoch 2/3, Loss: 0.4725, Time: 192.13 seconds
 Epoch 3/3, Loss: 0.4106, Time: 192.60 seconds
 
 # GPU/CPU Version
+Epoch 1/3, Loss: 0.5990, Time: 553.51 seconds
+Epoch 2/3, Loss: 0.4742, Time: 552.41 seconds
+Epoch 3/3, Loss: 0.4124, Time: 563.62 seconds
+Accuracy: 78.00%
