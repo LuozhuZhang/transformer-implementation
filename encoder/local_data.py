@@ -46,27 +46,45 @@ custom_reviews = [
 custom_loader = create_dataloader(custom_reviews)
 
 # Load the model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if torch.backends.mps.is_available():  # Check if MPS is available, set for Mac
+  device = torch.device('mps')
+elif torch.cuda.is_available():
+  device = torch.device('cuda')
+else:
+  device = torch.device('cpu')
 model = TransformerEncoder(num_layers=6, d_model=512, num_heads=8, d_ff=2048, vocab_size=tokenizer.vocab_size)
 model.load_state_dict(torch.load('./trained_transformer_encoder.pth'))  # Load your local model
 model.to(device)
 
 # Step 6: Evaluation function
-def evaluate_custom_reviews(model, custom_loader):
+def evaluate_model(model, custom_reviews, model_path='./trained_transformer_encoder.pth', output_path='./local_data.txt'):
+  model.load_state_dict(torch.load(model_path, weights_only=True))
   model.eval()
-  predictions = []
+  
+  results = []
   with torch.no_grad():
-    for batch in custom_loader:
-      input_ids, attention_mask = [x.to(device) for x in batch]
+    for review in custom_reviews:
+      # Tokenize and prepare the review
+      tokens = tokenizer(review, padding='max_length', truncation=True, max_length=MAX_LEN, return_tensors='pt')
+      input_ids = tokens['input_ids'].to(device)
+      attention_mask = tokens['attention_mask'].to(device)
+      
+      # Get model output
       outputs = model(input_ids)
       _, predicted = torch.max(outputs, 1)
-      predictions.extend(predicted.cpu().numpy())  # Store predictions
+      sentiment = 'Positive' if predicted.item() == 1 else 'Negative'
+      
+      # Store the result
+      results.append(f'Review: "{review}" - Sentiment: {sentiment}')
+  
+  # Write results to file
+  with open(output_path, 'w') as f:
+    for result in results:
+      f.write(result + '\n')
+  
+  print(f'Results saved to {output_path}')
 
-  # Interpret predictions (0 = negative, 1 = positive)
-  for review, prediction in zip(custom_reviews, predictions):
-    sentiment = "Positive" if prediction == 1 else "Negative"
-    print(f'Review: "{review}" - Sentiment: {sentiment}')
 
 # Evaluate the model on custom reviews
 print("\nEvaluating on custom reviews:")
-evaluate_custom_reviews(model, custom_loader)
+evaluate_model(model, custom_loader)
