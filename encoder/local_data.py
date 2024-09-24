@@ -1,7 +1,8 @@
+import time
 import torch
 from transformers import BertTokenizer
 from torch.utils.data import DataLoader, TensorDataset
-from imdb import TransformerEncoder  # Importing the model from imdb.py
+from imdb import TransformerEncoder
 
 # Hyperparameters
 MAX_LEN = 128  # Max sentence length
@@ -42,21 +43,36 @@ model.load_state_dict(torch.load('./trained_transformer_encoder.pth', weights_on
 model.to(device)
 model.eval()
 
-# Evaluate the model on custom reviews
+# Evaluate the model on custom reviews and time the evaluation
+start_time = time.time()
 results = []
+
 with torch.no_grad():
   for batch in custom_loader:
     input_ids, attention_mask = [x.to(device) for x in batch]
     
     # Get model output
     outputs = model(input_ids)
-    _, predicted = torch.max(outputs, 1)
-    sentiment = 'Positive' if predicted.item() == 1 else 'Negative'
-    
+    probabilities = torch.nn.functional.softmax(outputs, dim=1)
+    predicted = torch.argmax(probabilities, 1)
+
     # Store the result
-    results.append(f'Review: "{custom_reviews[0]}" - Sentiment: {sentiment}')
+    sentiment = 'Positive' if predicted.item() == 1 else 'Negative'
+    results.append(f'Review: "{custom_reviews[0]}" - Sentiment: {sentiment} - Probabilities: {probabilities.cpu().numpy()}')
     custom_reviews.pop(0)  # Remove the processed review from the list
+
+# Calculate time taken
+end_time = time.time()
+time_taken = end_time - start_time
 
 # Print the results
 for result in results:
   print(result)
+
+# Save results to a log file
+with open('./local_data.log', 'w') as log_file:
+  log_file.write(f"Evaluation Time: {time_taken:.2f} seconds\n")
+  for result in results:
+    log_file.write(result + '\n')
+
+print(f'Results saved to ./local_data.log')
