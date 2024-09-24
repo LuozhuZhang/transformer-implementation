@@ -1,68 +1,72 @@
 import time
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer
-import numpy as np
-from imdb import TransformerEncoder
+from imdb import TransformerEncoder  # Importing the model from imdb.py
 
 # Hyperparameters
 MAX_LEN = 128  # Max sentence length
 BATCH_SIZE = 32
-D_MODEL = 512  # Embedding dimension
-N_HEADS = 8  # Number of attention heads
-D_FF = 2048  # Feed-forward network hidden size
-NUM_LAYERS = 6  # Number of encoder layers
-NUM_CLASSES = 2  # Positive and negative classes
 
-# Step 1: Load the BERT tokenizer for tokenization
+# Load the BERT tokenizer for tokenization
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-# Step 2: Define the Transformer Encoder and other necessary classes (not shown here for brevity)
+# Function to tokenize, truncate, and pad sequences
+def tokenize_data(data, max_len=MAX_LEN):
+  tokens = tokenizer(
+    data, padding='max_length', truncation=True, max_length=max_len, return_tensors='pt'
+  )
+  return tokens['input_ids'], tokens['attention_mask']
 
-# Load the saved model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)
-model.load_state_dict(torch.load('./trained_transformer_encoder.pth', map_location=device))
-model.to(device)
+# Create dataloader for new data
+def create_dataloader(dataset, batch_size=BATCH_SIZE):
+  inputs, masks = tokenize_data(dataset)
+  data = torch.utils.data.TensorDataset(inputs, masks)
+  return DataLoader(data, batch_size=batch_size, shuffle=False)
 
-# Step 3: Custom dataset containing reviews
+# Load IMDB test data
+dataset = load_dataset('imdb')
+test_data = dataset['test']
+
+# Create test dataloader
+test_loader = create_dataloader([item['text'] for item in test_data['train']])  # Just an example, modify as needed
+
+# Define custom reviews
 custom_reviews = [
-    "I absolutely loved this movie! It was fantastic.",
-    "The plot was boring and the characters were dull.",
-    "A remarkable film that I would recommend to everyone.",
-    "It was a waste of time, I didn't enjoy it at all.",
-    "Great acting and a wonderful story!",
-    "I found it very tedious and hard to follow.",
-    "One of the best films I've ever seen.",
-    "Not my cup of tea, but I can see why others might like it.",
-    "An outstanding achievement in cinema!",
-    "I didn't like it, the pacing was too slow."
+  "I loved this movie! It was fantastic.",
+  "This was the worst film I have ever seen.",
+  "It was okay, nothing special.",
+  "Absolutely brilliant! I would watch it again.",
+  "Not my cup of tea, unfortunately."
 ]
 
-# Step 4: Tokenize the custom reviews
-def tokenize_custom_data(reviews, max_len=MAX_LEN):
-    tokens = tokenizer(
-        reviews, padding='max_length', truncation=True, max_length=max_len, return_tensors='pt'
-    )
-    return tokens['input_ids'], tokens['attention_mask']
+# Create dataloader for custom reviews
+custom_loader = create_dataloader(custom_reviews)
 
-# Step 5: Make predictions on the custom reviews
-def predict_sentiments(model, reviews):
-    model.eval()
-    input_ids, attention_mask = tokenize_custom_data(reviews)
-    input_ids, attention_mask = input_ids.to(device), attention_mask.to(device)
-    
-    with torch.no_grad():
-        outputs = model(input_ids)
-        _, predicted = torch.max(outputs, 1)
-    
-    # Display results
-    for review, sentiment in zip(reviews, predicted):
-        sentiment_label = "Positive" if sentiment.item() == 1 else "Negative"
-        print(f"Review: {review}\nPredicted Sentiment: {sentiment_label}\n")
+# Load the model
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = TransformerEncoder(num_layers=6, d_model=512, num_heads=8, d_ff=2048, vocab_size=tokenizer.vocab_size)
+model.load_state_dict(torch.load('./trained_transformer_encoder.pth'))  # Load your local model
+model.to(device)
 
-# Step 6: Call the prediction function
-predict_sentiments(model, custom_reviews)
+# Step 6: Evaluation function
+def evaluate_custom_reviews(model, custom_loader):
+  model.eval()
+  predictions = []
+  with torch.no_grad():
+    for batch in custom_loader:
+      input_ids, attention_mask = [x.to(device) for x in batch]
+      outputs = model(input_ids)
+      _, predicted = torch.max(outputs, 1)
+      predictions.extend(predicted.cpu().numpy())  # Store predictions
+
+  # Interpret predictions (0 = negative, 1 = positive)
+  for review, prediction in zip(custom_reviews, predictions):
+    sentiment = "Positive" if prediction == 1 else "Negative"
+    print(f'Review: "{review}" - Sentiment: {sentiment}')
+
+# Evaluate the model on custom reviews
+print("\nEvaluating on custom reviews:")
+evaluate_custom_reviews(model, custom_loader)
