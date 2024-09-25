@@ -136,3 +136,7 @@ train_model(model, train_loader, criterion, optimizer)
 prompt = "Once upon a time"
 generated_text = generate_text(model, tokenizer, prompt)
 print("Generated Text:", generated_text)
+
+save_path = '.gpt2.pth'
+torch.save(model.state_dict(), save_path)
+print(f'Model saved to {save_path}')
