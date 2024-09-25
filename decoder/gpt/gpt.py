@@ -23,6 +23,7 @@ train_data = [text for text in train_data if len(text.split()) < MAX_LEN]  # Fil
 
 # Step 2: Load the GPT-2 tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+tokenizer.pad_token = tokenizer.eos_token  # Set padding token to eos token
 
 # Function to tokenize, truncate, and pad sequences
 def tokenize_data(data, max_len=MAX_LEN):
