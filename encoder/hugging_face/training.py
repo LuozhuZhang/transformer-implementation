@@ -1,11 +1,12 @@
 import time
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer, PretrainedConfig, PreTrainedModel
-import numpy as np
+from transformers import MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING
 
 # Hyperparameters
 MAX_LEN = 128  # Max sentence length
@@ -153,6 +154,8 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_pa
             f.write(record + '\n')
     print(f'Training records saved to {log_path}')
 
+MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['custom_transformer'] = TransformerEncoder
+
 # Step 6: Evaluation function
 def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder.pth'):
     model.load_state_dict(torch.load(model_path, weights_only=True))  # Load the saved model state
@@ -169,5 +172,5 @@ def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder
     accuracy = correct / total
     print(f'Accuracy: {accuracy * 100:.2f}%')
 
-train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
-evaluate_model(model, test_loader)
+# train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
+# evaluate_model(model, test_loader)
