@@ -111,12 +111,7 @@ class TransformerEncoder(PreTrainedModel):
         return self.fc(src)
     
 # Step 4: Define loss function, optimizer and device
-if torch.backends.mps.is_available():  # Check if MPS is available, set for Mac
-  device = torch.device('mps')
-elif torch.cuda.is_available():
-  device = torch.device('cuda')
-else:
-  device = torch.device('cpu')
+device = torch.device('mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu')
 config = TransformerConfig(d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, num_layers=NUM_LAYERS, num_classes=NUM_CLASSES)
 model = TransformerEncoder(config)
 model.to(device)
