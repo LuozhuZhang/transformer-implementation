@@ -2,13 +2,17 @@ from transformers import BertTokenizer, AutoModelForSequenceClassification
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 import time
+from transformers import AutoConfig
+from encoder.hugging_face.training import TransformerEncoder
 
 # Set device
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu')
 
 # Load tokenizer and model
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = AutoModelForSequenceClassification.from_pretrained('Luozhu/nlp-sentiment-classification-model')
+config = AutoConfig.from_pretrained('Luozhu/nlp-sentiment-classification-model')
+print(config)
+model = TransformerEncoder.from_pretrained('Luozhu/nlp-sentiment-classification-model', config=config)
 model.to(device)
 model.eval()
 

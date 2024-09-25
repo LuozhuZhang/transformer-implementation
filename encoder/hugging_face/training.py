@@ -111,6 +111,9 @@ class TransformerEncoder(PreTrainedModel):
         src = src.mean(dim=0)
         return self.fc(src)
     
+# Register the custom model with Hugging Face
+MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['custom_transformer'] = TransformerEncoder
+
 # Step 4: Define loss function, optimizer and device
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu')
 config = TransformerConfig(d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, num_layers=NUM_LAYERS, num_classes=NUM_CLASSES)
@@ -154,8 +157,6 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_pa
             f.write(record + '\n')
     print(f'Training records saved to {log_path}')
 
-MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['custom_transformer'] = TransformerEncoder
-
 # Step 6: Evaluation function
 def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder.pth'):
     model.load_state_dict(torch.load(model_path, weights_only=True))  # Load the saved model state
@@ -174,3 +175,8 @@ def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder
 
 train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
 evaluate_model(model, test_loader)
+
+if 'custom_transformer' in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING:
+    print("Job Done:", MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['custom_transformer'])
+else:
+    print("Something Wrong")
