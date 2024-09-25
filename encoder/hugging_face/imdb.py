@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from datasets import load_dataset
 from torch.utils.data import DataLoader
-from transformers import BertTokenizer, PretrainedConfig
+from transformers import BertTokenizer, PretrainedConfig, PreTrainedModel
 import numpy as np
 
 # Hyperparameters
@@ -40,7 +40,7 @@ def create_dataloader(dataset, batch_size=BATCH_SIZE):
 train_loader = create_dataloader(train_data)
 test_loader = create_dataloader(test_data)
 
-# Config class for the model
+# Step 3: Config class for the model
 class TransformerConfig(PretrainedConfig):
     model_type = "custom_transformer"
 
@@ -52,7 +52,7 @@ class TransformerConfig(PretrainedConfig):
         self.num_layers = num_layers
         self.num_classes = num_classes
 
-# Step 3: Define the Positional Encoding for Transformer
+# Define the Positional Encoding for Transformer
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super().__init__()
@@ -91,23 +91,23 @@ class TransformerEncoderLayer(nn.Module):
         return self.norm2(src + ffn_output)
 
 # Transformer Encoder consisting of multiple encoder layers
-class TransformerEncoder(nn.Module):
-    def __init__(self, num_layers, d_model, num_heads, d_ff, vocab_size):
-        super().__init__()
-        self.embedding = nn.Embedding(vocab_size, d_model)  #! inputs embedding
-        self.positional_encoding = PositionalEncoding(d_model)  #! positional encoding
-        self.layers = nn.ModuleList([TransformerEncoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)])  #! MHA process
-        self.fc = nn.Linear(d_model, NUM_CLASSES)
+class TransformerEncoder(PreTrainedModel):
+    config_class = TransformerConfig
 
-    def forward(self, src, mask=None):
-        # Embedding + positional encoding
+    def __init__(self, config):
+        super().__init__(config)
+        self.embedding = nn.Embedding(tokenizer.vocab_size, config.d_model)
+        self.positional_encoding = PositionalEncoding(config.d_model)
+        self.layers = nn.ModuleList([TransformerEncoderLayer(config) for _ in range(config.num_layers)])
+        self.fc = nn.Linear(config.d_model, config.num_classes)
+
+    def forward(self, src):
         src = self.embedding(src)
         src = self.positional_encoding(src)
-        src = src.transpose(0, 1)  # Change to [seq_len, batch_size, d_model]
-        # Pass through the encoder layers
+        src = src.transpose(0, 1)
         for layer in self.layers:
-            src = layer(src, mask)
-        src = src.mean(dim=0)  # Global average pooling
+            src = layer(src)
+        src = src.mean(dim=0)
         return self.fc(src)
     
 # Step 4: Define loss function, optimizer and device
