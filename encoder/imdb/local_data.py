@@ -2,7 +2,7 @@ import time
 import torch
 from transformers import BertTokenizer
 from torch.utils.data import DataLoader, TensorDataset
-from imdb import TransformerEncoder
+from encoder.imdb.training import TransformerEncoder
 
 # Hyperparameters
 MAX_LEN = 128
