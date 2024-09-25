@@ -1,4 +1,5 @@
 import time
+import warnings
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -6,6 +7,8 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import GPT2Tokenizer
 import numpy as np
+
+warnings.filterwarnings("ignore", category=UserWarning, module='multiprocessing.resource_tracker')
 
 # Hyperparameters
 MAX_LEN = 128  # Max sentence length
@@ -117,6 +120,10 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=1):
     avg_loss = total_loss / len(train_loader)
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}')
 
+  save_path = '.gpt2.pth'
+  torch.save(model.state_dict(), save_path)
+  print(f'Model saved to {save_path}')
+
 # Step 6: Generate text function
 def generate_text(model, tokenizer, prompt, max_length=50):
   model.eval()
@@ -139,7 +146,3 @@ train_model(model, train_loader, criterion, optimizer)
 prompt = "Once upon a time"
 generated_text = generate_text(model, tokenizer, prompt)
 print("Generated Text:", generated_text)
-
-save_path = '.gpt2.pth'
-torch.save(model.state_dict(), save_path)
-print(f'Model saved to {save_path}')
