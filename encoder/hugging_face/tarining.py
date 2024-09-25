@@ -117,10 +117,9 @@ elif torch.cuda.is_available():
   device = torch.device('cuda')
 else:
   device = torch.device('cpu')
-model = TransformerEncoder(num_layers=NUM_LAYERS, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, vocab_size=tokenizer.vocab_size)  # 6 layers + 512 d + 8 heads + 2048 FFN (hidden size) + 30522 vocab size
-# model.load_state_dict(torch.load('./trained_transformer_encoder.pth'))  #! Re-use
+config = TransformerConfig(d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, num_layers=NUM_LAYERS, num_classes=NUM_CLASSES)
+model = TransformerEncoder(config)
 model.to(device)
-# print("Model loaded successfully!")  #! Re-use
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -175,5 +174,5 @@ def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder
     accuracy = correct / total
     print(f'Accuracy: {accuracy * 100:.2f}%')
 
-# train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
-# evaluate_model(model, test_loader)
+train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
+evaluate_model(model, test_loader)
