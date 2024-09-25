@@ -172,5 +172,5 @@ def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder
     accuracy = correct / total
     print(f'Accuracy: {accuracy * 100:.2f}%')
 
-# train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
-# evaluate_model(model, test_loader)
+train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
+evaluate_model(model, test_loader)
