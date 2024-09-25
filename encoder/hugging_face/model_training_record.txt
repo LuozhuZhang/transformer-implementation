@@ -1,0 +1,3 @@
+Epoch 1/3, Loss: 0.6138, Time: 196.92 seconds
+Epoch 2/3, Loss: 0.4625, Time: 197.32 seconds
+Epoch 3/3, Loss: 0.4031, Time: 193.24 seconds
