@@ -40,18 +40,20 @@ train_loader = create_dataloader(train_data)
 
 # Step 3: Define the Positional Encoding for Transformer
 class PositionalEncoding(nn.Module):
-  def __init__(self, d_model, max_len=5000):
+  def __init__(self, d_model):
     super().__init__()
-    pe = torch.zeros(max_len, d_model)
-    position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-    div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
-    pe[:, 0::2] = torch.sin(position * div_term)
-    pe[:, 1::2] = torch.cos(position * div_term)
-    self.register_buffer('pe', pe.unsqueeze(0))
+    self.d_model = d_model
 
   def forward(self, x):
-    pe = self.pe.to(x.device)
-    return x + pe[:, :x.size(1), :]
+    seq_len = x.size(1)
+    device = x.device
+    position = torch.arange(0, seq_len, dtype=torch.float, device=device).unsqueeze(1)
+    div_term = torch.exp(torch.arange(0, self.d_model, 2, device=device).float() * (-np.log(10000.0) / self.d_model))
+    pe = torch.zeros(seq_len, self.d_model, device=device)
+    pe[:, 0::2] = torch.sin(position * div_term)
+    pe[:, 1::2] = torch.cos(position * div_term)
+    pe = pe.unsqueeze(0)  # (1, seq_len, d_model)
+    return x + pe
 
 # Transformer Decoder Layer with masked self-attention
 class TransformerDecoderLayer(nn.Module):
