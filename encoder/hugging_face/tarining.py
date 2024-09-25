@@ -98,7 +98,7 @@ class TransformerEncoder(PreTrainedModel):
         super().__init__(config)
         self.embedding = nn.Embedding(tokenizer.vocab_size, config.d_model)
         self.positional_encoding = PositionalEncoding(config.d_model)
-        self.layers = nn.ModuleList([TransformerEncoderLayer(config) for _ in range(config.num_layers)])
+        self.layers = nn.ModuleList([TransformerEncoderLayer(config.d_model, config.num_heads, config.d_ff) for _ in range(config.num_layers)])
         self.fc = nn.Linear(config.d_model, config.num_classes)
 
     def forward(self, src):
