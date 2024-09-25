@@ -43,7 +43,7 @@ test_loader = create_dataloader(test_data)
 
 # Step 3: Config class for the model
 class TransformerConfig(PretrainedConfig):
-    model_type = "custom_transformer"
+    model_type = "luozhu_custom_transformer"
 
     def __init__(self, d_model=D_MODEL, num_heads=N_HEADS, d_ff=D_FF, num_layers=NUM_LAYERS, num_classes=NUM_CLASSES, **kwargs):
         super().__init__(**kwargs)
@@ -112,7 +112,7 @@ class TransformerEncoder(PreTrainedModel):
         return self.fc(src)
     
 # Register the custom model with Hugging Face
-MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['custom_transformer'] = TransformerEncoder
+MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['luozhu_custom_transformer'] = TransformerEncoder
 
 # Step 4: Define loss function, optimizer and device
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu')
@@ -176,7 +176,7 @@ def evaluate_model(model, test_loader, model_path='./trained_transformer_encoder
 train_model(model, train_loader, criterion, optimizer, num_epochs=3, save_path='./trained_transformer_encoder.pth', log_path='./model_training_record.txt')
 evaluate_model(model, test_loader)
 
-if 'custom_transformer' in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING:
-    print("Job Done:", MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['custom_transformer'])
+if 'luozhu_custom_transformer' in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING:
+    print("Job Done:", MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING['luozhu_custom_transformer'])
 else:
     print("Something Wrong")

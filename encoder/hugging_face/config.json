@@ -1,5 +1,5 @@
 {
-  "model_type": "custom_transformer",
+  "model_type": "luozhu_custom_transformer",
   "hidden_size": 512,
   "num_attention_heads": 8,
   "num_hidden_layers": 6,
