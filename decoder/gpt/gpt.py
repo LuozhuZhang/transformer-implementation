@@ -98,7 +98,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 # Step 5: Training function
-def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
+def train_model(model, train_loader, criterion, optimizer, num_epochs=1):
   model.train()
   for epoch in range(num_epochs):
     total_loss = 0
@@ -119,11 +119,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
 def generate_text(model, tokenizer, prompt, max_length=50):
   model.eval()
   input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
-  attention_mask = torch.triu(torch.ones(input_ids.size(1), input_ids.size(1)), diagonal=1).bool().to(device)
   generated = input_ids
 
   with torch.no_grad():
     for _ in range(max_length):
+      attention_mask = torch.triu(torch.ones(generated.size(1), generated.size(1)), diagonal=1).bool().to(device)
       outputs = model(generated, attention_mask)
       next_token = torch.argmax(outputs[:, -1, :], dim=-1)
       generated = torch.cat((generated, next_token.unsqueeze(0)), dim=1)
