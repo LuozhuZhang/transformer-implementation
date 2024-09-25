@@ -27,16 +27,16 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 # Tokenize data
 def tokenize_data(data, max_len=MAX_LEN):
-    tokens = tokenizer(
-        data['text'], padding='max_length', truncation=True, max_length=max_len, return_tensors='pt'
-    )
-    return tokens['input_ids'], torch.tensor(data['label'])
+  tokens = tokenizer(
+    data['text'], padding='max_length', truncation=True, max_length=max_len, return_tensors='pt'
+  )
+  return tokens['input_ids'], torch.tensor(data['label'])
 
 # Create DataLoader
 def create_dataloader(dataset, batch_size=BATCH_SIZE):
-    inputs, labels = tokenize_data(dataset)
-    data = torch.utils.data.TensorDataset(inputs, labels)
-    return DataLoader(data, batch_size=batch_size, shuffle=True)
+  inputs, labels = tokenize_data(dataset)
+  data = torch.utils.data.TensorDataset(inputs, labels)
+  return DataLoader(data, batch_size=batch_size, shuffle=True)
 
 train_loader = create_dataloader(train_data)
 test_loader = create_dataloader(test_data)
@@ -52,35 +52,35 @@ optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 # Training function
 def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
-    model.train()
-    for epoch in range(num_epochs):
-        total_loss = 0
-        for batch in train_loader:
-            input_ids, labels = [x.to(device) for x in batch]
-            optimizer.zero_grad()
-            outputs = model(input_ids)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
+  model.train()
+  for epoch in range(num_epochs):
+    total_loss = 0
+    for batch in train_loader:
+      input_ids, labels = [x.to(device) for x in batch]
+      optimizer.zero_grad()
+      outputs = model(input_ids)
+      loss = criterion(outputs, labels)
+      loss.backward()
+      optimizer.step()
+      total_loss += loss.item()
 
-        avg_loss = total_loss / len(train_loader)
-        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}')
+    avg_loss = total_loss / len(train_loader)
+    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}')
 
 # Evaluation function
 def evaluate_model(model, test_loader):
-    model.eval()
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for batch in test_loader:
-            input_ids, labels = [x.to(device) for x in batch]
-            outputs = model(input_ids)
-            _, predicted = torch.max(outputs, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    accuracy = correct / total
-    print(f'Accuracy: {accuracy * 100:.2f}%')
+  model.eval()
+  correct = 0
+  total = 0
+  with torch.no_grad():
+    for batch in test_loader:
+      input_ids, labels = [x.to(device) for x in batch]
+      outputs = model(input_ids)
+      _, predicted = torch.max(outputs, 1)
+      total += labels.size(0)
+      correct += (predicted == labels).sum().item()
+  accuracy = correct / total
+  print(f'Accuracy: {accuracy * 100:.2f}%')
 
 # Train and evaluate
 train_model(model, train_loader, criterion, optimizer, num_epochs=3)

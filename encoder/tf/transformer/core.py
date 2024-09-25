@@ -89,9 +89,11 @@ class TransformerEncoder(nn.Module):
     self.positional_encoding = PositionalEncoding(d_model)
     self.layers = nn.ModuleList([TransformerEncoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)])
 
-  def forward(self, x):
-    x = self.embedding(x)
-    x = self.positional_encoding(x)
-    for layer in self.layers:
-      x = layer(x)
-    return x
+  def forward(self, src, mask=None):
+      src = self.embedding(src)
+      src = self.positional_encoding(src)
+      src = src.transpose(0, 1)
+      for layer in self.layers:
+          src = layer(src, mask)
+      src = src.mean(dim=0)  # Global average pooling across the sequence length
+      return self.fc(src)
