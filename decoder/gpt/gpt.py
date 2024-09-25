@@ -16,26 +16,24 @@ D_FF = 2048  # Feed-forward network hidden size
 NUM_LAYERS = 6  # Number of decoder layers
 VOCAB_SIZE = 50257  # GPT-2 vocabulary size
 
-# Step 1: Load the dataset (e.g., a small text corpus)
+# Step 1: Load dataset (e.g., Wikitext-2)
 dataset = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train')
 train_data = dataset['text']
 train_data = [text for text in train_data if len(text.split()) < MAX_LEN]  # Filter long texts
 
-# Step 2: Load the GPT-2 tokenizer for tokenization
+# Step 2: Load the GPT-2 tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
-# Function to tokenize and pad sequences
+# Function to tokenize, truncate, and pad sequences
 def tokenize_data(data, max_len=MAX_LEN):
-  tokens = tokenizer(
-    data, padding='max_length', truncation=True, max_length=max_len, return_tensors='pt'
-  )
-  return tokens['input_ids']
+  tokens = tokenizer(data, padding='max_length', truncation=True, max_length=max_len, return_tensors='pt')
+  return tokens['input_ids'], tokens['attention_mask']
 
 # Create dataloader for train data
 def create_dataloader(data, batch_size=BATCH_SIZE):
-  inputs = tokenize_data(data)
-  data = torch.utils.data.TensorDataset(inputs)
-  return DataLoader(data, batch_size=batch_size, shuffle=True)
+  inputs, masks = tokenize_data(data)
+  dataset = torch.utils.data.TensorDataset(inputs, masks)
+  return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 train_loader = create_dataloader(train_data)
 
@@ -54,12 +52,11 @@ class PositionalEncoding(nn.Module):
     pe = self.pe.to(x.device)
     return x + pe[:, :x.size(1), :]
 
-# Transformer Decoder Layer with Multi-head Attention and Feed-Forward Network
+# Transformer Decoder Layer with masked self-attention
 class TransformerDecoderLayer(nn.Module):
   def __init__(self, d_model, num_heads, d_ff):
     super().__init__()
     self.self_attn = nn.MultiheadAttention(d_model, num_heads)
-    self.cross_attn = nn.MultiheadAttention(d_model, num_heads)
     self.ffn = nn.Sequential(
       nn.Linear(d_model, d_ff),
       nn.ReLU(),
@@ -67,15 +64,12 @@ class TransformerDecoderLayer(nn.Module):
     )
     self.norm1 = nn.LayerNorm(d_model)
     self.norm2 = nn.LayerNorm(d_model)
-    self.norm3 = nn.LayerNorm(d_model)
 
-  def forward(self, x, enc_output, mask=None):
-    attn_output, _ = self.self_attn(x, x, x)
+  def forward(self, x, mask=None):
+    attn_output, _ = self.self_attn(x, x, x, attn_mask=mask)
     x = self.norm1(x + attn_output)
-    attn_cross_output, _ = self.cross_attn(x, enc_output, enc_output)  # 交叉注意力
-    x = self.norm2(x + attn_cross_output)
     ffn_output = self.ffn(x)
-    return self.norm3(x + ffn_output)
+    return self.norm2(x + ffn_output)
 
 # Transformer Decoder consisting of multiple decoder layers
 class TransformerDecoder(nn.Module):
@@ -86,12 +80,12 @@ class TransformerDecoder(nn.Module):
     self.layers = nn.ModuleList([TransformerDecoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)])
     self.fc = nn.Linear(d_model, vocab_size)
 
-  def forward(self, x, enc_output, mask=None):
+  def forward(self, x, mask=None):
     x = self.embedding(x)
     x = self.positional_encoding(x)
     x = x.transpose(0, 1)  # Change to [seq_len, batch_size, d_model]
     for layer in self.layers:
-      x = layer(x, enc_output)
+      x = layer(x, mask)
     return self.fc(x)
 
 # Step 4: Define loss function, optimizer and device
@@ -106,15 +100,39 @@ optimizer = optim.Adam(model.parameters(), lr=1e-4)
 def train_model(model, train_loader, criterion, optimizer, num_epochs=3):
   model.train()
   for epoch in range(num_epochs):
+    total_loss = 0
     for batch in train_loader:
-      input_ids = batch[0].to(device)
+      input_ids, _ = [x.to(device) for x in batch]
       optimizer.zero_grad()
-      outputs = model(input_ids, input_ids)  # 使用自身作为输入
-      loss = criterion(outputs.view(-1, VOCAB_SIZE), input_ids.view(-1))  # 计算损失
+      # Create attention mask for the current input
+      mask = torch.triu(torch.ones(input_ids.size(1), input_ids.size(1)), diagonal=1).bool().to(device)
+      outputs = model(input_ids, mask)
+      loss = criterion(outputs.view(-1, VOCAB_SIZE), input_ids.view(-1))
       loss.backward()
       optimizer.step()
-      print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+      total_loss += loss.item()
+    avg_loss = total_loss / len(train_loader)
+    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}')
+
+# Step 6: Generate text function
+def generate_text(model, tokenizer, prompt, max_length=50):
+  model.eval()
+  input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
+  attention_mask = torch.triu(torch.ones(input_ids.size(1), input_ids.size(1)), diagonal=1).bool().to(device)
+  generated = input_ids
+
+  with torch.no_grad():
+    for _ in range(max_length):
+      outputs = model(generated, attention_mask)
+      next_token = torch.argmax(outputs[:, -1, :], dim=-1)
+      generated = torch.cat((generated, next_token.unsqueeze(0)), dim=1)
+
+  return tokenizer.decode(generated[0], skip_special_tokens=True)
 
 # Train the model
 train_model(model, train_loader, criterion, optimizer)
 
+# Step 7: Text generation example
+prompt = "Once upon a time"
+generated_text = generate_text(model, tokenizer, prompt)
+print("Generated Text:", generated_text)
