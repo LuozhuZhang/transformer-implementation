@@ -67,7 +67,7 @@ class AddNorm(nn.Module):
 
   def forward(self, x, residual):
     return self.norm(x + residual)
-
+  
 class TransformerEncoderLayer(nn.Module):
   def __init__(self, d_model, num_heads, d_ff):
     super().__init__()
@@ -76,24 +76,25 @@ class TransformerEncoderLayer(nn.Module):
     self.add_norm1 = AddNorm(d_model)
     self.add_norm2 = AddNorm(d_model)
 
-  def forward(self, x):
+  def forward(self, x, mask=None):
     attn_out = self.attn(x)
     x = self.add_norm1(x, attn_out)
     ffn_out = self.ffn(x)
     return self.add_norm2(x, ffn_out)
 
 class TransformerEncoder(nn.Module):
-  def __init__(self, num_layers, d_model, num_heads, d_ff, vocab_size):
+  def __init__(self, num_layers, d_model, num_heads, d_ff, vocab_size, num_classes):
     super().__init__()
     self.embedding = CustomEmbedding(vocab_size, d_model)
     self.positional_encoding = PositionalEncoding(d_model)
     self.layers = nn.ModuleList([TransformerEncoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)])
+    self.fc = nn.Linear(d_model, num_classes)
 
   def forward(self, src, mask=None):
-      src = self.embedding(src)
-      src = self.positional_encoding(src)
-      src = src.transpose(0, 1)
-      for layer in self.layers:
-          src = layer(src, mask)
-      src = src.mean(dim=0)  # Global average pooling across the sequence length
-      return self.fc(src)
+    src = self.embedding(src)
+    src = self.positional_encoding(src)
+    src = src.transpose(0, 1)
+    for layer in self.layers:
+      src = layer(src, mask)
+    src = src.mean(dim=0)  # Global average pooling across the sequence length
+    return self.fc(src)
