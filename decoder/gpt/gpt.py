@@ -72,7 +72,7 @@ class TransformerDecoderLayer(nn.Module):
     self.norm2 = nn.LayerNorm(d_model)
 
   def forward(self, x, mask=None):
-    attn_output, _ = self.self_attn(x, x, x, attn_mask=mask)
+    attn_output, _ = self.self_attn(x, x, x, attn_mask=mask)  #! Key difference: attn_mask is used for masking the future tokens
     x = self.norm1(x + attn_output)
     ffn_output = self.ffn(x)
     return self.norm2(x + ffn_output)
